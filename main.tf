@@ -5,11 +5,18 @@ resource "aws_eks_cluster" "example1" {
   vpc_config {
     subnet_ids = [aws_subnet.my-pub_subnet.id, aws_subnet.my-pri_subnet.id]
   }
+  enabled_cluster_log_types = ["api", "audit"]
   depends_on = [
     aws_iam_role_policy_attachment.example-AmazonEKSClusterPolicy,
     aws_iam_role_policy_attachment.example-AmazonEKSVPCResourceController,
     aws_iam_role_policy_attachment.example-AmazonEKSServicePolicy,
   ]
+}
+
+resource "aws_flow_log" "test_flow_log" {
+  vpc_id       = aws_vpc.my-vpc.id
+  traffic_type = "ALL"
+  # other required fields here
 }
 
 resource "aws_iam_role" "example" {
@@ -116,24 +123,11 @@ resource "aws_security_group" "ssh_from_office" {
   name        = "ssh_from_office"
   description = "Allow ssh from office"
   vpc_id      = aws_vpc.my-vpc.id
-
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol  = -1
+    self      = true
+    from_port = 0
+    to_port   = 0
   }
 
   egress {
